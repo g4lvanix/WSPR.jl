@@ -130,8 +130,6 @@ function coarse_sync(candidates, s)
     best_parameters
 end
 
-
-
 """
     mean(x::Vector)
 
@@ -174,16 +172,12 @@ function coarse_sync_single(c, s)
     # frequency drift and offset are estimated using linear regression 
     df, f0 = linear_regression(t, f)
 
-    (strip=strip, bin=c.bin, t0=t0, f0=f0, df=df)
+    (bin=c.bin, t0=t0, f0=f0, df=df)
 end
 
 function custom_coarse_sync(candidates, s)
     p = fftshift(s.power, 1)
-    sync = []
-    for c in candidates
-        push!(sync, coarse_sync_single(c, p))
-    end
-    sync
+    [coarse_sync_single(c, p) for c in candidates]
 end
 
 function get_stuff() 
@@ -195,7 +189,7 @@ function get_stuff()
 
     coarse_parameters = coarse_sync(candidates, spectrogram)
 
-    samples, spectrogram, candidates, periodogram, coarse_parameters
+    samples, spectrogram, candidates, coarse_parameters
 end
 
 function sim() 
