@@ -130,6 +130,62 @@ function coarse_sync(candidates, s)
     best_parameters
 end
 
+
+
+"""
+    mean(x::Vector)
+
+    Return the arithmetic mean of x
+"""
+mean(x) = sum(x)/length(x)
+
+"""
+    linear_regression(x, y)
+
+    Return least squares parameters m and b for the model y = m*x + b
+"""
+function linear_regression(x, y) 
+    N = length(x)
+    xm = mean(x)
+    ym = mean(y)
+
+    sx2 = sum(x.^2)
+    sxy = sum(x.*y)
+    den = (sx2 - N*xm^2)
+    m = (sxy - xm*ym)/den
+    b = (ym*sx2 - xm*sxy)/den 
+
+    m, b
+end
+
+function coarse_sync_single(c, s)
+    winlen = 324
+    # extract a strip of data around the candidate frequency
+    strip = s[(c.bin-9):(c.bin+9), :]
+    # timing is estimated by cross correlating with a rectangular window 
+    # that is as long as the expected signal --> maximum energy
+    power = sum(strip, dims=1)
+    t0 = argmax(xcorr(ones(winlen), vec(power)))-winlen
+    # time 
+    t = t0 .+ (0:2:winlen-1)
+    # create index variable
+    idx = filter(v -> 0 < v < size(strip)[2], t)
+    f = map(v -> v[1]-9, argmax(strip, dims=1)[idx])
+    # frequency drift and offset are estimated using linear regression 
+    df, f0 = linear_regression(t, f)
+
+    (strip=strip, bin=c.bin, t0=t0, f0=f0, df=df)
+end
+
+function custom_coarse_sync(candidates, s)
+    p = fftshift(s.power, 1)
+    sync = []
+    for c in candidates
+        push!(sync, coarse_sync_single(c, p))
+    end
+    sync
+end
+
 function get_stuff() 
     samples = read_wavfile("150426_0918.wav")
 
