@@ -1,9 +1,8 @@
 module WSPR
 
-using WAV, DSP
+using WAV, DSP, FFTW
 using Plots
 
-using FFTW: fftshift
 
 struct Candidate 
     bin::Unsigned
@@ -168,7 +167,7 @@ function coarse_sync_single(c, s)
     t = t0 .+ (0:2:winlen-1)
     # create index variable
     idx = filter(v -> 0 < v < size(strip)[2], t)
-    f = map(v -> v[1]-9, argmax(strip, dims=1)[idx])
+    f = map(v -> v[1]-10, argmax(strip, dims=1)[idx])
     # frequency drift and offset are estimated using linear regression 
     df, f0 = linear_regression(t, f)
 
